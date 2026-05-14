@@ -78,7 +78,6 @@ async def crear_promocion(payload: Promocion) -> dict[str, Any]:
             "promotion_created_event_publish_failed",
             extra={"promotion_id": document["id"], "error": str(exc)},
         )
-        raise HTTPException(status_code=502, detail="Promotion saved but event publish failed") from exc
 
     logger.info("promotion_created", extra={"promotion_id": document["id"]})
     return document

@@ -11,7 +11,7 @@ Build a local Kubernetes application on Minikube using the architecture shown in
 - Kafka
 - Excel adapter
 
-Each custom component will live in its own folder and will be implemented in Python. Infrastructure components such as MongoDB and Kafka will be deployed through Kubernetes manifests or Helm charts.
+Each custom component will live in its own folder and will be implemented in Python. Infrastructure components such as MongoDB and Kafka will be deployed through Kubernetes manifests.
 
 ## Proposed Repository Structure
 
@@ -75,8 +75,7 @@ proyecto-arquisoft/
 │   │   ├── service.yaml
 │   │   ├── pvc.yaml
 │   │   └── secret.yaml
-│   └── kafka/
-│       └── values.yaml
+│   └── kafka.yaml
 ├── scripts/
 │   ├── build-images.sh
 │   ├── deploy-local.sh
@@ -161,16 +160,18 @@ Kafka will be the event backbone.
 
 Recommended local approach:
 
-- Use the Bitnami Kafka Helm chart for Minikube.
-- Run Kafka in KRaft mode if supported by the selected chart version, avoiding ZooKeeper.
-- Create topics through Helm chart provisioning in `k8s/kafka/values.yaml`.
-- Deploy Kafka with `helm upgrade --install` so the same command can be rerun during local development.
+- Use a single plain Kubernetes manifest in `k8s/kafka.yaml`.
+- Use a `Service` named `kafka-service`.
+- Use a `Deployment` with the official `apache/kafka:latest` image.
+- Run Kafka in KRaft mode to avoid ZooKeeper.
+- Rely on Kafka's local-development default behavior for topic creation.
 
-Reason for Helm-based topic provisioning:
+Reason for this simplified Kafka manifest:
 
-- Topic definitions stay versioned with the Kafka deployment configuration.
-- Recreating the Minikube environment is simpler because Kafka and its topics are installed together.
-- Repeated development deployments can use the same `helm upgrade --install` command instead of manually recreating topics.
+- It is closer to the classroom/reference example.
+- It avoids Helm and extra topic initialization jobs.
+- Kubernetes just pulls the Kafka image and runs a single broker.
+- This is enough for Minikube development.
 
 Initial topics:
 
@@ -237,7 +238,7 @@ api-gateway.arquisoft-local.svc.cluster.local
 motor-nba-nbo.arquisoft-local.svc.cluster.local
 gestor-promociones.arquisoft-local.svc.cluster.local
 mongo.arquisoft-local.svc.cluster.local
-kafka.arquisoft-local.svc.cluster.local
+kafka-service.arquisoft-local.svc.cluster.local
 adaptador-excel.arquisoft-local.svc.cluster.local
 ```
 
@@ -306,7 +307,8 @@ This avoids needing a remote image registry for local Minikube development.
    ```bash
    kubectl apply -f k8s/namespace.yaml
    kubectl apply -f k8s/mongo/
-   helm upgrade --install kafka bitnami/kafka -n arquisoft-local -f k8s/kafka/values.yaml
+   kubectl apply -f k8s/kafka.yaml
+   kubectl rollout status deployment/kafka -n arquisoft-local --timeout=180s
    ```
 
 5. Deploy custom services.
@@ -471,7 +473,7 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 4. Promotion fields can be assumed for the first implementation.
 5. NBA/NBO decision rules can be assumed for the first implementation.
 6. The API Gateway can be open because this is local development.
-7. Kafka topics should be provisioned through Helm values and deployed with `helm upgrade --install`.
+7. Kafka should use a single simple Kubernetes manifest instead of Helm or a topic initialization job.
 8. MongoDB should be a single local instance.
 9. Spanish naming is preferred.
 10. Structured logs are enough for initial observability.

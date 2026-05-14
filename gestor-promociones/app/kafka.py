@@ -8,7 +8,7 @@ from aiokafka import AIOKafkaProducer
 
 logger = logging.getLogger(__name__)
 
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka-service:9092")
 KAFKA_TOPIC_PROMOCIONES_CREADAS = os.getenv(
     "KAFKA_TOPIC_PROMOCIONES_CREADAS", "promociones.creadas"
 )

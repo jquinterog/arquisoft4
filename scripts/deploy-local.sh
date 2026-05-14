@@ -5,10 +5,8 @@ NAMESPACE="arquisoft-local"
 
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/mongo/
-
-helm upgrade --install kafka bitnami/kafka \
-  --namespace "${NAMESPACE}" \
-  --values k8s/kafka/values.yaml
+kubectl apply -f k8s/kafka.yaml
+kubectl rollout status deployment/kafka --namespace "${NAMESPACE}" --timeout=180s
 
 kubectl apply -f k8s/gestor-promociones/
 kubectl apply -f k8s/motor-nba-nbo/

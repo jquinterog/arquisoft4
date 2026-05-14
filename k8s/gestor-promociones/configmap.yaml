@@ -6,5 +6,5 @@ metadata:
 data:
   MONGO_DB: promociones
   MONGO_COLLECTION: promociones
-  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  KAFKA_BOOTSTRAP_SERVERS: kafka-service:9092
   KAFKA_TOPIC_PROMOCIONES_CREADAS: promociones.creadas
