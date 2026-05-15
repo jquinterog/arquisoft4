@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: motor-nba-nbo-config
+  namespace: arquisoft-local
+data:
+  GESTOR_PROMOCIONES_URL: http://gestor-promociones:8000

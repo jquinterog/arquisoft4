@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: motor-nba-nbo
+  namespace: arquisoft-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: motor-nba-nbo
+  template:
+    metadata:
+      labels:
+        app: motor-nba-nbo
+    spec:
+      containers:
+        - name: motor-nba-nbo
+          image: arquisoft/motor-nba-nbo:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: motor-nba-nbo-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20

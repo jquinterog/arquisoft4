@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adaptador-excel-config
+  namespace: arquisoft-local
+data:
+  KAFKA_BOOTSTRAP_SERVERS: kafka-service:9092
+  KAFKA_TOPIC_PROMOCIONES_CREADAS: promociones.creadas
+  KAFKA_CONSUMER_GROUP: adaptador-excel
