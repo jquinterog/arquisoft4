@@ -1,38 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gestor-promociones
+  name: componente-promociones
   namespace: arquisoft-local
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gestor-promociones
+      app: componente-promociones
   template:
     metadata:
       labels:
-        app: gestor-promociones
+        app: componente-promociones
     spec:
       containers:
-        - name: gestor-promociones
-          image: arquisoft/gestor-promociones:local
+        - name: componente-promociones
+          image: arquisoft/componente-promociones:local
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
-                name: gestor-promociones-config
+                name: componente-promociones-config
             - secretRef:
-                name: gestor-promociones-secret
+                name: componente-promociones-secret
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 20

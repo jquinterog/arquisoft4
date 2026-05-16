@@ -6,12 +6,12 @@ Build a local Kubernetes application on Minikube using the architecture shown in
 
 - API Gateway
 - Motor NBA/NBO
-- Gestor de promociones
-- MongoDB database for promotions
+- Componente de promociones
+- PostgreSQL database for promotions
 - Kafka
 - Excel adapter
 
-Each custom component will live in its own folder and will be implemented in Python. Infrastructure components such as MongoDB and Kafka will be deployed through Kubernetes manifests.
+Each custom component will live in its own folder and will be implemented in Python. Infrastructure components such as PostgreSQL and Kafka will be deployed through Kubernetes manifests.
 
 ## Proposed Repository Structure
 
@@ -33,13 +33,19 @@ proyecto-arquisoft/
 │   ├── tests/
 │   ├── Dockerfile
 │   └── requirements.txt
-├── gestor-promociones/
-│   ├── app/
+├── componente-promociones/
+│   ├── componente_promociones/
 │   │   ├── main.py
-│   │   ├── db.py
+│   │   ├── database.py
 │   │   ├── kafka.py
 │   │   ├── schemas.py
-│   │   └── service.py
+│   │   ├── models/
+│   │   ├── repositories/
+│   │   ├── routers/
+│   │   └── services/
+│   ├── alembic/
+│   ├── alembic.ini
+│   ├── docker-compose.yml
 │   ├── tests/
 │   ├── Dockerfile
 │   └── requirements.txt
@@ -61,7 +67,7 @@ proyecto-arquisoft/
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   └── configmap.yaml
-│   ├── gestor-promociones/
+│   ├── componente-promociones/
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   ├── configmap.yaml
@@ -70,8 +76,8 @@ proyecto-arquisoft/
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   └── configmap.yaml
-│   ├── mongo/
-│   │   ├── statefulset.yaml
+│   ├── postgres/
+│   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   ├── pvc.yaml
 │   │   └── secret.yaml
@@ -92,14 +98,14 @@ Python FastAPI service that exposes the public API for local users or test clien
 Responsibilities:
 
 - Receive external HTTP requests.
-- Route promotion-related operations to `gestor-promociones`.
+- Route promotion-related operations to `componente-promociones`.
 - Route rule or decision-related operations to `motor-nba-nbo`.
 - Provide a single external entry point through a Kubernetes `Service`, preferably `NodePort` for Minikube.
 
 Expected calls:
 
 - `API Gateway -> Motor NBA/NBO`
-- `API Gateway -> Gestor de promociones`
+- `API Gateway -> Componente de promociones`
 
 ### Motor NBA/NBO
 
@@ -109,28 +115,28 @@ Responsibilities:
 
 - Evaluate business rules.
 - Return next-best-action or next-best-offer decisions.
-- Optionally call `gestor-promociones` to fetch eligible promotions, as shown by the diagram arrow from Motor NBA/NBO to Gestor de promociones.
+- Optionally call `componente-promociones` to fetch eligible promotions, as shown by the diagram arrow from Motor NBA/NBO to Componente de promociones.
 
 Expected calls:
 
-- `Motor NBA/NBO -> Gestor de promociones`
+- `Motor NBA/NBO -> Componente de promociones`
 
-### Gestor de promociones
+### Componente de promociones
 
 Python FastAPI service that owns promotion business operations.
 
 Responsibilities:
 
 - Create, update, fetch, and validate promotions.
-- Persist promotions in MongoDB.
+- Persist promotions in PostgreSQL.
 - Publish an event to Kafka when a promotion is created.
 - Use structured logs for request handling, persistence operations, and event publication.
 - It will not consume Kafka events in the current design.
 
 Expected calls:
 
-- `Gestor de promociones -> MongoDB`
-- `Gestor de promociones -> Kafka`
+- `Componente de promociones -> PostgreSQL`
+- `Componente de promociones -> Kafka`
 
 ### Adaptador Excel
 
@@ -177,20 +183,19 @@ Initial topics:
 
 - `promociones.creadas`
 
-### MongoDB
+### PostgreSQL
 
-MongoDB stores promotion data.
+PostgreSQL stores promotion data.
 
 Recommended local approach:
 
-- Use a Kubernetes `StatefulSet`.
+- Use a Kubernetes `Deployment`.
 - Use a `PersistentVolumeClaim` backed by Minikube storage.
 - Store credentials in Kubernetes `Secret`.
 
 Initial database:
 
-- Database: `promociones`
-- Collection: `promociones`
+- Database: `teknoshop_campaigns`
 
 ## Suggested Python Stack
 
@@ -207,8 +212,10 @@ python-dotenv
 Additional dependencies by component:
 
 ```text
-gestor-promociones:
-  pymongo
+componente-promociones:
+  sqlalchemy
+  psycopg2-binary
+  alembic
   aiokafka
 
 adaptador-excel:
@@ -236,8 +243,8 @@ Use internal `ClusterIP` services for service-to-service communication:
 ```text
 api-gateway.arquisoft-local.svc.cluster.local
 motor-nba-nbo.arquisoft-local.svc.cluster.local
-gestor-promociones.arquisoft-local.svc.cluster.local
-mongo.arquisoft-local.svc.cluster.local
+componente-promociones.arquisoft-local.svc.cluster.local
+postgres.arquisoft-local.svc.cluster.local
 kafka-service.arquisoft-local.svc.cluster.local
 adaptador-excel.arquisoft-local.svc.cluster.local
 ```
@@ -254,12 +261,12 @@ Use `ConfigMap` for non-secret settings:
 - Service URLs
 - Kafka bootstrap servers
 - Kafka topic names
-- Mongo database and collection names
 
 Use `Secret` for sensitive settings:
 
-- Mongo username
-- Mongo password
+- Postgres `DATABASE_URL`
+- Postgres username
+- Postgres password
 - Any future API keys
 
 ### Images
@@ -270,7 +277,7 @@ Build images directly into the Minikube Docker environment:
 eval $(minikube docker-env)
 docker build -t arquisoft/api-gateway:local ./api-gateway
 docker build -t arquisoft/motor-nba-nbo:local ./motor-nba-nbo
-docker build -t arquisoft/gestor-promociones:local ./gestor-promociones
+docker build -t arquisoft/componente-promociones:local ./componente-promociones
 docker build -t arquisoft/adaptador-excel:local ./adaptador-excel
 ```
 
@@ -302,11 +309,12 @@ This avoids needing a remote image registry for local Minikube development.
    ./scripts/build-images.sh
    ```
 
-4. Deploy namespace, MongoDB, and Kafka.
+4. Deploy namespace, PostgreSQL, and Kafka.
 
    ```bash
    kubectl apply -f k8s/namespace.yaml
-   kubectl apply -f k8s/mongo/
+   kubectl apply -f k8s/postgres/
+   kubectl rollout status deployment/postgres -n arquisoft-local --timeout=180s
    kubectl apply -f k8s/kafka.yaml
    kubectl rollout status deployment/kafka -n arquisoft-local --timeout=180s
    ```
@@ -314,7 +322,7 @@ This avoids needing a remote image registry for local Minikube development.
 5. Deploy custom services.
 
    ```bash
-   kubectl apply -f k8s/gestor-promociones/
+   kubectl apply -f k8s/componente-promociones/
    kubectl apply -f k8s/motor-nba-nbo/
    kubectl apply -f k8s/adaptador-excel/
    kubectl apply -f k8s/api-gateway/
@@ -344,15 +352,17 @@ POST /promociones
 POST /nba-nbo/evaluate
 ```
 
-### Gestor de promociones
+### Componente de promociones
 
 ```text
 GET    /health
-GET    /promociones
-GET    /promociones/{id}
-POST   /promociones
-PUT    /promociones/{id}
-DELETE /promociones/{id}
+GET    /campaigns
+GET    /campaigns/{campaign_id}
+POST   /campaigns
+PUT    /campaigns/{campaign_id}
+PATCH  /campaigns/{campaign_id}/activate
+PATCH  /campaigns/{campaign_id}/pause
+PATCH  /campaigns/{campaign_id}/cancel
 ```
 
 ### Motor NBA/NBO
@@ -376,15 +386,16 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 
 ```json
 {
-  "id": "promo-001",
-  "name": "Promo ejemplo",
-  "description": "Descripcion de la promocion",
-  "segment": "premium",
-  "channel": "web",
+  "id": "uuid",
+  "name": "Oferta iPhone 15 Web",
+  "description": "Descuento para clientes premium en canal web",
+  "type": "NEXT_BEST_OFFER",
+  "status": "DRAFT",
+  "channel": "WEB",
   "priority": 10,
-  "active": true,
-  "starts_at": "2026-05-01T00:00:00Z",
-  "ends_at": "2026-06-01T00:00:00Z"
+  "start_date": "2026-05-01T00:00:00Z",
+  "end_date": "2026-06-01T00:00:00Z",
+  "action_message": "Aprovecha 15% de descuento"
 }
 ```
 
@@ -394,14 +405,15 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 {
   "event_type": "promotion_created",
   "event_id": "uuid",
-  "source": "gestor-promociones",
+  "source": "componente-promociones",
   "payload": {
-    "id": "promo-001",
-    "name": "Promo ejemplo",
-    "segment": "premium",
-    "channel": "web",
+    "id": "uuid",
+    "name": "Oferta iPhone 15 Web",
+    "type": "NEXT_BEST_OFFER",
+    "status": "DRAFT",
+    "channel": "WEB",
     "priority": 10,
-    "active": true
+    "action_message": "Aprovecha 15% de descuento"
   }
 }
 ```
@@ -418,15 +430,15 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 
 ### Phase 2: Core Promotion Flow
 
-- Implement CRUD in `gestor-promociones`.
-- Connect `gestor-promociones` to MongoDB.
-- Route API Gateway promotion endpoints to `gestor-promociones`.
+- Implement CRUD in `componente-promociones`.
+- Connect `componente-promociones` to PostgreSQL.
+- Route API Gateway promotion endpoints to `componente-promociones`.
 - Add basic tests around promotion validation and persistence.
 
 ### Phase 3: Kafka Integration
 
 - Deploy Kafka.
-- Add producer support in `gestor-promociones`.
+- Add producer support in `componente-promociones`.
 - Publish `promotion_created` events to `promociones.creadas` when a promotion is created.
 - Add consumer support in `adaptador-excel`.
 - Have `adaptador-excel` consume and log events without applying business behavior yet.
@@ -435,7 +447,7 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 
 - Implement first version of rule evaluation.
 - Connect API Gateway to `motor-nba-nbo`.
-- Connect `motor-nba-nbo` to `gestor-promociones`.
+- Connect `motor-nba-nbo` to `componente-promociones`.
 - Add tests for rule decisions.
 
 ### Phase 5: Excel Import
@@ -449,7 +461,7 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 - This is a local development architecture intended to run on Minikube, not a production Kubernetes cluster.
 - All custom components should be implemented in Python.
 - FastAPI is acceptable for HTTP APIs.
-- MongoDB is the source of truth for promotion data.
+- PostgreSQL is the source of truth for promotion data.
 - Kafka is used for asynchronous promotion-created events.
 - The API Gateway is the only service exposed outside the cluster.
 - Internal services communicate using Kubernetes DNS and `ClusterIP` services.
@@ -458,7 +470,7 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 - The Excel adapter will initially consume Kafka events and do no business processing.
 - The NBA/NBO engine can start with deterministic business rules in Python before introducing a more advanced rules engine or ML model.
 - The API Gateway can stay unauthenticated because this is local development only.
-- MongoDB will run as a single local instance.
+- PostgreSQL will run as a single local instance.
 - Spanish names are preferred for folders, APIs, Kubernetes resources, and domain concepts.
 - Structured logs are sufficient for initial observability.
 - Helper scripts for building images and deploying to Minikube should be included.
@@ -468,13 +480,13 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 ## Resolved Questions
 
 1. The Excel adapter will read Kafka events and do nothing else for now.
-2. `gestor-promociones` will publish an event to Kafka when a promotion is created.
-3. `gestor-promociones` will not consume Kafka events.
+2. `componente-promociones` will publish an event to Kafka when a promotion is created.
+3. `componente-promociones` will not consume Kafka events.
 4. Promotion fields can be assumed for the first implementation.
 5. NBA/NBO decision rules can be assumed for the first implementation.
 6. The API Gateway can be open because this is local development.
 7. Kafka should use a single simple Kubernetes manifest instead of Helm or a topic initialization job.
-8. MongoDB should be a single local instance.
+8. PostgreSQL should be a single local instance.
 9. Spanish naming is preferred.
 10. Structured logs are enough for initial observability.
 11. Helper scripts should be included.
@@ -482,7 +494,7 @@ The service will primarily run a Kafka consumer. The `/health` endpoint is optio
 
 ## Follow-up Questions
 
-1. When a promotion is created, should `gestor-promociones` publish the Kafka event only after MongoDB persistence succeeds? -> yes
+1. When a promotion is created, should `componente-promociones` publish the Kafka event only after PostgreSQL persistence succeeds? -> yes
 2. If Kafka publication fails after the promotion is saved, should the create request fail, or should the API return success and log the event-publish failure? -> return success and log the failure.
 3. Should update/delete operations also publish events later, or is the first implementation strictly create-only? -> let's start with create-only for the first implementation.
 
@@ -493,7 +505,7 @@ Start with Phase 1 and Phase 2:
 1. Scaffold the four Python services.
 2. Add Dockerfiles.
 3. Add basic Kubernetes manifests.
-4. Deploy MongoDB.
-5. Implement promotion CRUD through API Gateway and Gestor de promociones.
+4. Deploy PostgreSQL.
+5. Implement promotion CRUD through API Gateway and Componente de promociones.
 
 This creates a working vertical slice before adding the Kafka consumer behavior in `adaptador-excel`.

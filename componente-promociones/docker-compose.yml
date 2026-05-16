@@ -19,6 +19,7 @@ services:
     container_name: teknoshop-api
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/teknoshop_campaigns
+      KAFKA_ENABLED: "false"
     ports:
       - "8000:8000"
     depends_on:

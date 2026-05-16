@@ -6,8 +6,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 
-GESTOR_PROMOCIONES_URL = os.getenv(
-    "GESTOR_PROMOCIONES_URL", "http://gestor-promociones:8000"
+COMPONENTE_PROMOCIONES_URL = os.getenv(
+    "COMPONENTE_PROMOCIONES_URL", "http://componente-promociones:8000"
 )
 
 app = FastAPI(title="Motor NBA/NBO")
@@ -27,12 +27,12 @@ async def health() -> dict[str, str]:
 @app.post("/evaluate")
 async def evaluate(payload: EvaluacionRequest) -> dict[str, Any]:
     promociones = await _obtener_promociones()
+    canal = payload.canal.upper()
     elegibles = [
         promocion
         for promocion in promociones
-        if promocion.get("active", True)
-        and promocion.get("segment", "general") in {payload.segmento, "general"}
-        and promocion.get("channel", payload.canal) in {payload.canal, "todos"}
+        if promocion.get("status") == "ACTIVE"
+        and promocion.get("channel", canal) in {canal, "ALL"}
     ]
     elegibles.sort(key=lambda item: item.get("priority", 0), reverse=True)
     recomendacion = elegibles[0] if elegibles else None
@@ -47,7 +47,7 @@ async def evaluate(payload: EvaluacionRequest) -> dict[str, Any]:
 async def _obtener_promociones() -> list[dict[str, Any]]:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(f"{GESTOR_PROMOCIONES_URL}/promociones")
+            response = await client.get(f"{COMPONENTE_PROMOCIONES_URL}/campaigns")
             response.raise_for_status()
             data = response.json()
             if isinstance(data, list):

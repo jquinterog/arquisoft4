@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from componente_promociones.kafka import publisher
 from componente_promociones.database import get_db
 from componente_promociones.enums.campaign_enums import CampaignStatus, CampaignType, Channel
 from componente_promociones.repositories.campaign_repository import CampaignRepository
@@ -18,8 +19,10 @@ def get_campaign_service(db: Session = Depends(get_db)) -> CampaignService:
 
 
 @router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
-def create_campaign(payload: CampaignCreate, service: CampaignService = Depends(get_campaign_service)):
-    return service.create_campaign(payload)
+async def create_campaign(payload: CampaignCreate, service: CampaignService = Depends(get_campaign_service)):
+    campaign = service.create_campaign(payload)
+    await publisher.publish_campaign_created_safely(campaign)
+    return campaign
 
 
 @router.get("", response_model=list[CampaignResponse])

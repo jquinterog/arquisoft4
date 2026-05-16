@@ -5,8 +5,8 @@ import httpx
 from fastapi import FastAPI, HTTPException
 
 
-GESTOR_PROMOCIONES_URL = os.getenv(
-    "GESTOR_PROMOCIONES_URL", "http://gestor-promociones:8000"
+COMPONENTE_PROMOCIONES_URL = os.getenv(
+    "COMPONENTE_PROMOCIONES_URL", "http://componente-promociones:8000"
 )
 MOTOR_NBA_NBO_URL = os.getenv("MOTOR_NBA_NBO_URL", "http://motor-nba-nbo:8000")
 
@@ -37,12 +37,12 @@ async def health() -> dict[str, str]:
 
 @app.get("/promociones")
 async def listar_promociones() -> Any:
-    return await _proxy("GET", f"{GESTOR_PROMOCIONES_URL}/promociones")
+    return await _proxy("GET", f"{COMPONENTE_PROMOCIONES_URL}/campaigns")
 
 
 @app.post("/promociones", status_code=201)
 async def crear_promocion(payload: dict[str, Any]) -> Any:
-    return await _proxy("POST", f"{GESTOR_PROMOCIONES_URL}/promociones", json=payload)
+    return await _proxy("POST", f"{COMPONENTE_PROMOCIONES_URL}/campaigns", json=payload)
 
 
 @app.post("/nba-nbo/evaluate")

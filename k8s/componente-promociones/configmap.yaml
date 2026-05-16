@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: gestor-promociones-config
+  name: componente-promociones-config
   namespace: arquisoft-local
 data:
-  MONGO_DB: promociones
-  MONGO_COLLECTION: promociones
+  KAFKA_ENABLED: "true"
   KAFKA_BOOTSTRAP_SERVERS: kafka-service:9092
   KAFKA_TOPIC_PROMOCIONES_CREADAS: promociones.creadas
