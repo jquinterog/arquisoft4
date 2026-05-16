@@ -1,6 +1,14 @@
+import logging
+
 from fastapi import FastAPI
 
+from componente_promociones.kafka import publisher
 from componente_promociones.routers.campaign_router import router as campaign_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 app = FastAPI(
     title="TeknoShop Campaign Service",
@@ -9,6 +17,11 @@ app = FastAPI(
 )
 
 app.include_router(campaign_router)
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    await publisher.stop()
 
 
 @app.get("/health")

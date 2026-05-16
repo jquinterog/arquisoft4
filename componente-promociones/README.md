@@ -156,6 +156,14 @@ La variable requerida para ejecutar el contenedor es:
 DATABASE_URL=postgresql+psycopg2://postgres:postgres@<postgres-host>:5432/teknoshop_campaigns
 ```
 
+Variables Kafka para Kubernetes:
+
+```text
+KAFKA_ENABLED=true
+KAFKA_BOOTSTRAP_SERVERS=kafka-service:9092
+KAFKA_TOPIC_PROMOCIONES_CREADAS=promociones.creadas
+```
+
 API docs:
 
 - Swagger: http://127.0.0.1:8000/docs
@@ -239,11 +247,3 @@ Response 200:
 - Solo campanas ACTIVE pueden pausarse.
 - priority >= 1.
 - name, action_message, channel y type son obligatorios.
-
-Create a promotion:
-
-```bash
-curl -X POST http://localhost:8000/promociones \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Promo ejemplo","segment":"general","channel":"web","priority":10}'
-```

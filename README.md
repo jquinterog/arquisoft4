@@ -21,7 +21,7 @@ Ver [componente-promociones/README.md](componente-promociones/README.md) para ej
 
 ## Minikube
 
-La integracion completa con Kubernetes se mantiene en `k8s/` y se ajustara despues para usar el componente autocontenido de promociones.
+La integracion de Kubernetes usa `componente-promociones` y PostgreSQL.
 
 Flujo local actual:
 
@@ -31,4 +31,21 @@ eval $(minikube docker-env)
 ./scripts/build-images.sh
 ./scripts/deploy-local.sh
 ./scripts/port-forward.sh
+```
+
+Ejemplo para crear una promocion/campana a traves del API Gateway:
+
+```bash
+curl -X POST http://localhost:8000/promociones \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Oferta iPhone 15 Web",
+    "description": "Descuento para clientes premium en canal web",
+    "type": "NEXT_BEST_OFFER",
+    "channel": "WEB",
+    "priority": 1,
+    "start_date": "2026-05-20T10:00:00Z",
+    "end_date": "2026-06-20T10:00:00Z",
+    "action_message": "Aprovecha 15% de descuento en iPhone 15 hoy"
+  }'
 ```
