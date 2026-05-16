@@ -140,14 +140,13 @@ Expected calls:
 
 ### Adaptador Excel
 
-Python worker service that consumes promotion events from Kafka.
+Python worker service that consumes promotion events from Kafka and appends them to an Excel workbook.
 
 Responsibilities:
 
 - Subscribe to promotion-created events.
+- Append consumed events to `promociones.xlsx`.
 - Log consumed events with structured logs.
-- Keep the processing handler intentionally minimal for now.
-- Leave Excel-specific processing for a later implementation phase.
 
 Expected calls:
 
@@ -158,7 +157,7 @@ Initial behavior:
 - Run as a long-running consumer.
 - Read events from Kafka.
 - Acknowledge/log the event.
-- Do nothing else until the Excel behavior is defined later.
+- Persist the appended rows in an Excel file mounted at `/data/promociones.xlsx` in Kubernetes.
 
 ### Kafka
 

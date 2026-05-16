@@ -7,3 +7,4 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: kafka-service:9092
   KAFKA_TOPIC_PROMOCIONES_CREADAS: promociones.creadas
   KAFKA_CONSUMER_GROUP: adaptador-excel
+  EXCEL_FILE_PATH: /data/promociones.xlsx

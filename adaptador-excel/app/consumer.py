@@ -6,6 +6,8 @@ from typing import Any
 
 from aiokafka import AIOKafkaConsumer
 
+from app.excel_writer import append_event, ensure_workbook
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +25,13 @@ class PromotionConsumer:
         self._running = False
 
     async def start(self) -> None:
+        ensure_workbook()
         self._consumer = AIOKafkaConsumer(
             KAFKA_TOPIC_PROMOCIONES_CREADAS,
             bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
             group_id=KAFKA_CONSUMER_GROUP,
             value_deserializer=lambda value: json.loads(value.decode("utf-8")),
-            enable_auto_commit=True,
+            enable_auto_commit=False,
         )
         await self._consumer.start()
         self._running = True
@@ -46,20 +49,25 @@ class PromotionConsumer:
             return
         try:
             async for message in self._consumer:
-                await self.handle_event(message.value)
+                try:
+                    await self.handle_event(message.value)
+                    await self._consumer.commit()
+                except Exception:
+                    logger.exception("promotion_event_processing_failed")
                 if not self._running:
                     break
         except asyncio.CancelledError:
             return
 
     async def handle_event(self, event: dict[str, Any]) -> None:
+        info = await asyncio.to_thread(append_event, event)
         logger.info(
-            "promotion_event_consumed",
-            extra={
-                "event_id": event.get("event_id"),
-                "event_type": event.get("event_type"),
-                "source": event.get("source"),
-            },
+            "promotion_event_consumed event_id=%s event_type=%s source=%s excel_path=%s excel_data_rows=%s",
+            event.get("event_id"),
+            event.get("event_type"),
+            event.get("source"),
+            info["path"],
+            info["data_rows"],
         )
 
 

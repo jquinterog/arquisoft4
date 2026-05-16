@@ -7,7 +7,7 @@ Aplicacion local para Minikube con servicios Python, Kafka y componentes de nego
 - `api-gateway`: punto de entrada HTTP.
 - `motor-nba-nbo`: servicio basico de decision NBA/NBO.
 - `componente-promociones`: componente autocontenido para gestion de campanas/promociones con FastAPI, PostgreSQL y Alembic.
-- `adaptador-excel`: consumidor Kafka que por ahora registra eventos.
+- `adaptador-excel`: consumidor Kafka que agrega los eventos de promociones creadas a un archivo Excel.
 
 ## Componente de promociones
 

@@ -22,6 +22,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: adaptador-excel-config
+          volumeMounts:
+            - name: adaptador-excel-data
+              mountPath: /data
           readinessProbe:
             httpGet:
               path: /health
@@ -34,3 +37,7 @@ spec:
               port: 8000
             initialDelaySeconds: 20
             periodSeconds: 20
+      volumes:
+        - name: adaptador-excel-data
+          persistentVolumeClaim:
+            claimName: adaptador-excel-data

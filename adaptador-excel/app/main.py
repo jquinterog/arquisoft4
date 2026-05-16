@@ -1,8 +1,10 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from app.consumer import consumer
+from app.excel_writer import EXCEL_FILE_PATH, ensure_workbook, workbook_info
 
 
 logging.basicConfig(
@@ -26,3 +28,18 @@ async def shutdown() -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok", "service": "adaptador-excel"}
+
+
+@app.get("/excel/status")
+async def excel_status() -> dict:
+    return workbook_info()
+
+
+@app.get("/excel/download")
+async def excel_download() -> FileResponse:
+    ensure_workbook()
+    return FileResponse(
+        EXCEL_FILE_PATH,
+        filename="promociones.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
