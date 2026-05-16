@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from app.enums.campaign_enums import CampaignStatus
-from app.exceptions.campaign_exceptions import (
+from componente_promociones.enums.campaign_enums import CampaignStatus
+from componente_promociones.exceptions.campaign_exceptions import (
     BusinessRuleViolationException,
     CampaignNotFoundException,
     InvalidCampaignStateException,
 )
-from app.models.campaign import Campaign
-from app.repositories.campaign_repository import CampaignRepository
-from app.schemas.campaign import CampaignCreate, CampaignUpdate
+from componente_promociones.models.campaign import Campaign
+from componente_promociones.repositories.campaign_repository import CampaignRepository
+from componente_promociones.schemas.campaign import CampaignCreate, CampaignUpdate
 
 
 class CampaignService:

@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.enums.campaign_enums import CampaignStatus, CampaignType, Channel
-from app.models.campaign import Campaign
+from componente_promociones.enums.campaign_enums import CampaignStatus, CampaignType, Channel
+from componente_promociones.models.campaign import Campaign
 
 
 class CampaignRepository:

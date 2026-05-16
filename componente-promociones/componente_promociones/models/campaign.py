@@ -4,8 +4,8 @@ from sqlalchemy import DateTime, Enum, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
-from app.enums.campaign_enums import CampaignStatus, CampaignType, Channel
+from componente_promociones.database import Base
+from componente_promociones.enums.campaign_enums import CampaignStatus, CampaignType, Channel
 
 
 class Campaign(Base):

@@ -4,8 +4,8 @@ import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.database import Base
-from app.models.campaign import Campaign
+from componente_promociones.database import Base
+from componente_promociones.models.campaign import Campaign
 
 config = context.config
 

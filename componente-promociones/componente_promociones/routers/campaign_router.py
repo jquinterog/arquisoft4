@@ -3,11 +3,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.enums.campaign_enums import CampaignStatus, CampaignType, Channel
-from app.repositories.campaign_repository import CampaignRepository
-from app.schemas.campaign import CampaignCreate, CampaignResponse, CampaignUpdate
-from app.services.campaign_service import CampaignService
+from componente_promociones.database import get_db
+from componente_promociones.enums.campaign_enums import CampaignStatus, CampaignType, Channel
+from componente_promociones.repositories.campaign_repository import CampaignRepository
+from componente_promociones.schemas.campaign import CampaignCreate, CampaignResponse, CampaignUpdate
+from componente_promociones.services.campaign_service import CampaignService
 
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
 

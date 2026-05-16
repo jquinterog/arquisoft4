@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers.campaign_router import router as campaign_router
+from componente_promociones.routers.campaign_router import router as campaign_router
 
 app = FastAPI(
     title="TeknoShop Campaign Service",

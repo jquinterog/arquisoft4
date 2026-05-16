@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.enums.campaign_enums import CampaignStatus, CampaignType, Channel
+from componente_promociones.enums.campaign_enums import CampaignStatus, CampaignType, Channel
 
 
 class CampaignBase(BaseModel):
