@@ -51,6 +51,35 @@ curl -X POST http://localhost:8000/promociones \
   }'
 ```
 
+## Consultar la base de datos
+
+Ver las ultimas campanas:
+
+```bash
+./scripts/query-db.sh
+```
+
+Ejecutar una consulta especifica:
+
+```bash
+./scripts/query-db.sh "select count(*) from campaigns;"
+```
+
+Abrir una consola `psql` interactiva:
+
+```bash
+kubectl exec -it -n arquisoft-local deploy/postgres -- psql -U postgres -d teknoshop_campaigns
+```
+
+Comandos utiles dentro de `psql`:
+
+```sql
+\dt
+\d campaigns
+select * from campaigns order by created_at desc limit 5;
+\q
+```
+
 ## Voting para NBA/NBO
 
 El flujo de evaluacion `POST /nba-nbo/evaluate` en `api-gateway` enruta al componente `voting`.
