@@ -1,28 +1,27 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: motor-nba-nbo
+  name: voting
   namespace: arquisoft-local
 spec:
-  serviceName: motor-nba-nbo
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: motor-nba-nbo
+      app: voting
   template:
     metadata:
       labels:
-        app: motor-nba-nbo
+        app: voting
     spec:
       containers:
-        - name: motor-nba-nbo
-          image: arquisoft/motor-nba-nbo:local
+        - name: voting
+          image: arquisoft/voting:local
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
-                name: motor-nba-nbo-config
+                name: voting-config
           readinessProbe:
             httpGet:
               path: /health

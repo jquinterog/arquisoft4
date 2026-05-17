@@ -5,4 +5,4 @@ metadata:
   namespace: arquisoft-local
 data:
   COMPONENTE_PROMOCIONES_URL: http://componente-promociones:8000
-  MOTOR_NBA_NBO_URL: http://motor-nba-nbo:8000
+  MOTOR_NBA_NBO_URL: http://voting:8000

@@ -11,6 +11,7 @@ kubectl rollout status deployment/kafka --namespace "${NAMESPACE}" --timeout=180
 
 kubectl apply -f k8s/componente-promociones/
 kubectl apply -f k8s/motor-nba-nbo/
+kubectl apply -f k8s/voting/
 kubectl apply -f k8s/adaptador-excel/
 kubectl apply -f k8s/api-gateway/
 
