@@ -13,6 +13,7 @@ spec:
       labels:
         app: voting
     spec:
+      serviceAccountName: voting-sa
       containers:
         - name: voting
           image: arquisoft/voting:local

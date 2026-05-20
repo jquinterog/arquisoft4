@@ -7,6 +7,7 @@ Aplicacion local para Minikube con servicios Python, Kafka y componentes de nego
 - `api-gateway`: punto de entrada HTTP.
 - `voting`: componente de votacion que consulta 3 replicas de `motor-nba-nbo` y detecta discrepancias.
 - `motor-nba-nbo`: servicio basico de decision NBA/NBO.
+- `locust-voting`: pruebas de carga para `POST /nba-nbo/evaluate` via Locust.
 - `componente-promociones`: componente autocontenido para gestion de campanas/promociones con FastAPI, PostgreSQL y Alembic.
 - `adaptador-excel`: consumidor Kafka que agrega los eventos de promociones creadas a un archivo Excel.
 
@@ -126,3 +127,53 @@ curl -X POST http://127.0.0.1:8000/nba-nbo/evaluate \
 5. Ejecutar otra evaluacion con el mismo request. Como el flag era de un solo uso, se deberia volver a ver unanimidad (`unanimidad: true`) salvo que exista otro factor externo.
 
 6. Detener port-forward.
+
+## Monitoreo de replicas defectuosas y recuperacion automatica
+
+El componente `voting` detecta automaticamente cuando una replica produce respuestas discrepantes y la marca como defectuosa. Ademas, inicia automaticamente el reinicio (replacement) de la replica fallida.
+
+### Metricas de deteccion
+
+En cada respuesta de `_voting` se incluyen:
+
+- `detection_time_ms`: tiempo en milisegundos que tardo el voting en detectar la discrepancia.
+- `replicas_defectuosas`: lista de URLs de replicas marcadas como defectuosas.
+- `replicas_activas`: cantidad de replicas consultadas (excluye las defectuosas).
+- `replicas_con_discrepancia`: replicas que votaron diferente en esta evaluacion.
+
+### Flujo de recuperacion
+
+1. Una replica produce respuesta discrepante.
+2. `voting` la marca como defectuosa e inicia su restart via API de Kubernetes.
+3. El pod es eliminado y el StatefulSet lo reenspawna automaticamente.
+4. La replica defectuosa se excluye de futuras evaluaciones.
+
+### Endpoints de administracion (acceso directo a voting)
+
+Ver replicas marcadas como defectuosas:
+
+```bash
+curl -X GET http://127.0.0.1:{VOTING_PORT}/defective-replicas
+```
+
+Resetear manualmente todas las replicas defectuosas:
+
+```bash
+curl -X POST http://127.0.0.1:{VOTING_PORT}/reset-defective-replicas
+```
+
+Estos endpoints son utiles para monitoreo y recuperacion manual en caso de ser necesario.
+
+## Pruebas de carga con Locust
+
+Existe un proyecto dedicado para cargar el endpoint `evaluate` que usa la tactica de voting:
+
+```bash
+cd locust-voting
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+locust -f locustfile.py --host http://127.0.0.1:8000
+```
+
+Abrir `http://127.0.0.1:8089` para iniciar la prueba desde la UI de Locust.

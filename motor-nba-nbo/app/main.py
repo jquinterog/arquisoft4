@@ -47,7 +47,7 @@ async def evaluate(payload: EvaluacionRequest) -> dict[str, Any]:
             "cliente_id": payload.cliente_id,
             "decision": "oferta_diferente",
             "promocion": {
-                "id": "forced-different-response",
+                "id": "different-response",
                 "message": "Intentionally different response",
             },
         }
